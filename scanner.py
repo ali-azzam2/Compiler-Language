@@ -115,11 +115,65 @@ class Scanner:
                 self.included_files.add(file_name)
                 with open(file_name, 'r') as file:
                     included_code = file.read()
+                    # Store current line number
+                    original_line_num = self.line_num
+                    # Process the included file
                     self.scan(included_code)
+                    # Restore original line number for continuing with the parent file
+                    self.line_num = original_line_num
+                    print(f"Successfully included file: {file_name}")
             except FileNotFoundError:
-                self.add_error(file_name, "File not found for inclusion")
+                print(f"Warning: File '{file_name}' not found for inclusion.")
 
         return i
+
+    def check_for_using_command(self, source_code, line_start):
+        """Check if the current line begins with a 'using' command"""
+        i = line_start
+        # Skip any whitespace at beginning of line
+        while i < len(source_code) and self.is_whitespace(source_code[i]) and source_code[i] != '\n':
+            i += 1
+
+        # Check if line starts with "using"
+        if i + 5 <= len(source_code) and source_code[i:i+5] == "using":
+            # Found 'using' keyword at the beginning of line
+            i += 5  # Skip 'using'
+            
+            # Skip whitespace after 'using'
+            while i < len(source_code) and self.is_whitespace(source_code[i]) and source_code[i] != '\n':
+                i += 1
+
+            start = i
+            # Read file name until end of line or whitespace
+            while i < len(source_code) and not self.is_whitespace(source_code[i]):
+                i += 1
+
+            file_name = source_code[start:i].strip()
+            
+            # Process the included file
+            self.add_token(f"using {file_name}", "File Inclusion")
+            
+            if file_name not in self.included_files:
+                try:
+                    self.included_files.add(file_name)
+                    with open(file_name, 'r') as file:
+                        included_code = file.read()
+                        self.scan(included_code)
+                except FileNotFoundError:
+                    print(f"Warning: File '{file_name}' not found for inclusion. Continuing with current file.")
+                    # Note: As per requirements, we just ignore the command if file not found
+            
+            # Skip to the end of line
+            while i < len(source_code) and source_code[i] != '\n':
+                i += 1
+                
+            if i < len(source_code):
+                i += 1  # Skip the newline
+                self.line_num += 1
+                
+            return True, i
+            
+        return False, line_start
 
     def scan(self, source_code):
         """Main scanning function that processes the input source code"""
@@ -127,6 +181,13 @@ class Scanner:
         source_length = len(source_code)
 
         while i < source_length:
+            # Check if we're at the beginning of a line for using command
+            if i == 0 or (i > 0 and source_code[i-1] == '\n'):
+                using_found, new_pos = self.check_for_using_command(source_code, i)
+                if using_found:
+                    i = new_pos
+                    continue
+
             char = source_code[i]
 
             # Handle whitespace and line counting
@@ -152,6 +213,8 @@ class Scanner:
                     self.add_token(word, self.keywords[word])
                 # Handle the Require keyword for file inclusion
                 elif word == "Require":
+                    # Add the Require keyword as a token
+                    self.add_token("Require", "File Inclusion Keyword")
                     i = self.handle_require_statement(source_code, i)
                     continue
                 else:

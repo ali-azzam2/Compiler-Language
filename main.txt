@@ -1,0 +1,16 @@
+Type MyClass {
+    Ity my_variable = 10;
+    
+    /* This is a comment */
+    Require(test.txt);
+    
+    Valueless main() {
+        Cwq test = 'a';
+        CwqSequence message = "Hello World";
+        
+        /* Another comment */
+        Ity result = add(5, 3);
+        
+        Respondwith Valueless;
+    }
+}

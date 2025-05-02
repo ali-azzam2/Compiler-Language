@@ -1,0 +1,10 @@
+Ifity square(Ifity x) {
+    Respondwith x * x;
+}
+
+Ifity sqrt(Ifity x) {
+    Ifity result = x / 2;
+    /< Approximate square root calculation
+       using Newton's method >/
+    Respondwith result;
+}
