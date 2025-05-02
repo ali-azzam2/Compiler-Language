@@ -1,0 +1,46 @@
+
+
+ @ Type Person{
+        Logical G() {
+            int frt=5;
+            when (in counter<num){
+            int reg3=reg3-1;
+            }
+        }
+   }
+$
+
+
+
+@ Type Person{
+    Logical isAdult(Ity age) {
+        TrueFor (age >= 18) {
+            Respondwith Logical(true);
+        } Else {
+            Respondwith Logical(false);
+        }
+    }
+
+    Valueless printInfo(CwqSequence name, Ity age) {
+        /* This is a single line comment
+        Cwq gender = 'M';
+
+        /< This is a
+        multiline comment
+        to demonstrate the scanner's ability
+        to handle comments >/
+
+        Ity i = 0;
+
+        When (i = 0; i < 5; i = i + 1) {
+            i = i * 2;
+        }
+
+        However (i > 0) {
+            i = i - 1;
+        }
+
+        Endthis;
+    }
+}
+$
