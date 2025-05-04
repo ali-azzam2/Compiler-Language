@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from parser import Parser
+
 class Scanner:
     def __init__(self):
         # Dictionary of keywords with their corresponding token types
@@ -343,6 +345,7 @@ class Scanner:
 
     def print_results(self):
         """Print the scanning results"""
+        print("Scanning Results:\n")
         for token in self.tokens:
             if token['type'] == 'ERROR':
                 print(f"Line #: {token['line']} Error in Token Text: {token['text']}")
@@ -357,7 +360,7 @@ class Scanner:
 
 
 def process_file(filename):
-    """Process a source code file with the scanner"""
+    """Process a source code file with the scanner and parser"""
     try:
         with open(filename, 'r') as file:
             source_code = file.read()
@@ -365,7 +368,17 @@ def process_file(filename):
         scanner = Scanner()
         scanner.scan(source_code)
         scanner.print_results()
-        return scanner.tokens
+        tokens = scanner.get_tokens()
+
+        # Parsing phase
+        print("\nParser output:\n")
+        parser = Parser(tokens)
+        parser.parse()
+        parser.print_results()
+        if parser.parse_tree_root:
+            print("\nParse Tree:")
+            print(parser.parse_tree_root)
+        return tokens
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")

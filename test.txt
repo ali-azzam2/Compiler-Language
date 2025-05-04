@@ -1,13 +1,9 @@
-/< 
-   This is a multi-line comment
-   in the test file
->/
-using math.txt
-
-Ity add(Ity a, Ity b) {
-    Respondwith a + b;
+@ Type Person{
+    Logical G() {
+        int frt=5;
+        when (in counter<num){
+            int reg3=reg3-1;
+        }
+    }
 }
-
-Ifity multiply(Ifity a, Ifity b) {
-    Respondwith a * b;
-}
+$
