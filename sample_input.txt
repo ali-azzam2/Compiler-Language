@@ -1,0 +1,9 @@
+@ Type Person{
+    Logical G() {
+        int frt=5;
+        when (in counter<num){
+            Ity reg3=reg3-1;
+        }
+    }
+}
+$
