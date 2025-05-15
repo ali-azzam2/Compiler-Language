@@ -52,90 +52,147 @@ class Parser:
         return None
 
     def match_line_rules(self, tokens):
-        if (len(tokens) >= 3 and
-            tokens[0].type == TokenType.START_SYMBOL and
-            tokens[1].value == 'Type' and
-            tokens[2].type == TokenType.IDENTIFIER):
+        # Rule 1, 2, 3, 4: Program -> Start_Symbols ClassDeclaration End_Symbols
+        if len(tokens) >= 3 and self.is_start_symbol(tokens[0]) and tokens[1].value == 'Type' and tokens[2].type == TokenType.IDENTIFIER:
             return "Program and ClassDeclaration"
 
-        if (len(tokens) >= 5 and
-            tokens[0].value == 'Func' and
-            tokens[1].type in [TokenType.INTEGER, TokenType.SINTEGER, TokenType.CHARACTER,
-                               TokenType.STRING, TokenType.FLOAT, TokenType.SFLOAT,
-                               TokenType.VOID, TokenType.BOOLEAN] and
-            tokens[2].type == TokenType.IDENTIFIER and
-            tokens[3].value == '('):
-            return "Func Decl"
+        # Rule 5: ClassBody -> { ClassMembers }
+        if len(tokens) >= 1 and tokens[0].value == '{':
+            return "ClassBody"
+        if len(tokens) >= 1 and tokens[0].value == '}':
+            return "End of ClassBody"
 
-        if (len(tokens) >= 4 and
-            tokens[0].type in [TokenType.BOOLEAN, TokenType.INTEGER, TokenType.SINTEGER,
-                               TokenType.CHARACTER, TokenType.STRING, TokenType.FLOAT,
-                               TokenType.SFLOAT, TokenType.VOID] and
+        # Rule 9: FuncDecl -> Type ID ( ParameterList )
+        if (len(tokens) >= 5 and 
+            self.is_type(tokens[0]) and
             tokens[1].type == TokenType.IDENTIFIER and
-            tokens[2].value == '(' and tokens[-1].value in ['{', ';']):
-            return "Func Decl"
+            tokens[2].value == '(' and 
+            ')' in [t.value for t in tokens]):
+            if tokens[-1].value == ';':
+                return "MethodDecl - FuncDecl ;"
+            elif tokens[-1].value == '{':
+                return "MethodDecl - FuncDecl {"
+            return "FuncDecl"
 
+        # Rule 13: VariableDecl -> Type IDList ; | Type IDList [ ID ] ;
         if (len(tokens) >= 3 and
-            tokens[0].type in [TokenType.INTEGER, TokenType.SINTEGER, TokenType.CHARACTER,
-                               TokenType.STRING, TokenType.FLOAT, TokenType.SFLOAT,
-                               TokenType.VOID, TokenType.BOOLEAN] and
+            self.is_type(tokens[0]) and
             tokens[1].type == TokenType.IDENTIFIER and
             tokens[-1].value == ';'):
-            return "Variable Decl"
+            if '[' in [t.value for t in tokens]:
+                return "VariableDecl with array"
+            return "VariableDecl"
 
-        # Array declaration: Type ID [ Constant ];
-        if (len(tokens) >= 5 and
-            tokens[0].type in [TokenType.INTEGER, TokenType.SINTEGER, TokenType.CHARACTER,
-                              TokenType.STRING, TokenType.FLOAT, TokenType.SFLOAT,
-                              TokenType.VOID, TokenType.BOOLEAN] and
-            tokens[1].type == TokenType.IDENTIFIER and
-            tokens[2].value == '[' and tokens[3].type == TokenType.CONSTANT and
-            tokens[4].value == ']'):
-            return "Array Decl"
-
+        # Rule 18: Assignment -> ID = Expression ;
         if (len(tokens) >= 4 and
             tokens[0].type == TokenType.IDENTIFIER and
             tokens[1].value == '=' and
             tokens[-1].value == ';'):
             return "Assignment"
 
+        # Rule 19-20: FuncCall -> ID ( ArgumentList ) ;
         if (tokens[0].type == TokenType.IDENTIFIER and
-            tokens[1].value == '(' and tokens[-1].value == ';'):
-            return "Func Call"
+            tokens[1].value == '(' and 
+            tokens[-1].value == ';'):
+            return "FuncCall"
 
-        if tokens[0].value == 'When':
-            return "WhenStmt"
-
-        if tokens[0].value == 'However' and tokens[1].value == '(' and tokens[-1].value == '{':
-            return "HoweverStmt"
-
-        if tokens[0].value == 'TrueFor' and tokens[1].value == '(' and tokens[-1].value == '{':
+        # Rule 23: TrueForStmt -> TrueFor ( ConditionExpression ) Block
+        if (len(tokens) >= 4 and
+            tokens[0].value == 'TrueFor' and
+            tokens[1].value == '(' and
+            ')' in [t.value for t in tokens]):
+            if 'Else' in [t.value for t in tokens]:
+                return "TrueForStmt with Else"
             return "TrueForStmt"
 
-        if tokens[0].value == 'Endthis' and tokens[-1].value == ';':
-            return "EndthisStmt"
+        # Rule 25: HoweverStmt -> However ( ConditionExpression ) Block
+        if (len(tokens) >= 4 and
+            tokens[0].value == 'However' and
+            tokens[1].value == '(' and
+            ')' in [t.value for t in tokens] and
+            tokens[-1].value == '{'):
+            return "HoweverStmt"
 
-        if tokens[0].value == 'Scan' and tokens[1].value == '(' and tokens[2].value == 'Conditionof':
-            return "ScanStmt"
+        # Rule 26: WhenStmt -> When ( Expression ; Expression ; Expression ) Block
+        if (len(tokens) >= 7 and
+            tokens[0].value == 'When' and
+            tokens[1].value == '(' and
+            tokens[-1].value == '{'):
+            return "WhenStmt"
 
-        if tokens[0].value == 'Srap' and tokens[1].value == '(' and tokens[-1].value == ';':
-            return "SrapStmt"
-
-        if tokens[0].type == TokenType.INCLUSION and tokens[-1].value == ';':
-            return "Require Command"
-
-        if tokens[0].value == 'Respondwith' and tokens[-1].value == ';':
+        # Rule 27: RespondwithStmt -> Respondwith Expression ; | Respondwith ID ;
+        if (len(tokens) >= 3 and
+            tokens[0].value == 'Respondwith' and
+            tokens[-1].value == ';'):
             return "RespondwithStmt"
 
-        # Expression statements with relational or logic operators ending with ';'
-        if tokens[-1].value == ';' and any(
-            t.type in [TokenType.RELATIONAL_OP, TokenType.LOGIC_OP] for t in tokens):
-            return "ExpressionStmt"
+        # Rule 28: EndthisStmt -> Endthis ;
+        if (len(tokens) >= 2 and
+            tokens[0].value == 'Endthis' and
+            tokens[-1].value == ';'):
+            return "EndthisStmt"
 
-        if len(tokens) == 1 and tokens[0].type in [TokenType.BRACES, TokenType.END_SYMBOL]:
-            return "End Symbol or Braces"
+        # Rule 29: ScanStmt -> Scan(Conditionof ID) ;
+        if (len(tokens) >= 4 and
+            tokens[0].value == 'Scan' and
+            tokens[1].value == '(' and
+            'Conditionof' in [t.value for t in tokens] and
+            tokens[-1].value == ';'):
+            return "ScanStmt"
+
+        # Rule 30: SrapStmt -> Srap ( Expression ) ;
+        if (len(tokens) >= 4 and
+            tokens[0].value == 'Srap' and
+            tokens[1].value == '(' and
+            tokens[-1].value == ';'):
+            return "SrapStmt"
+
+        # Rule 31: Block -> { Statements }
+        if len(tokens) == 1 and tokens[0].value == '{':
+            return "Block Start"
+        if len(tokens) == 1 and tokens[0].value == '}':
+            return "Block End"
+
+        # Rule 34-35: Condition -> Expression ComparisonOp Expression
+        if any(t.type == TokenType.RELATIONAL_OP for t in tokens):
+            return "Condition"
+
+        # Rule 32-33: ConditionExpression -> Condition | Condition LogicalOp Condition
+        if any(t.type == TokenType.LOGIC_OP for t in tokens):
+            return "ConditionExpression"
+
+        # Rule 36-40: Expression operations
+        if any(t.type == TokenType.ARITHMETIC_OP for t in tokens) and tokens[-1].value == ';':
+            return "Expression Statement"
+
+        # Rule 41: Comment
+        if any(t.type == TokenType.COMMENT for t in tokens):
+            return "Comment"
+
+        # Rule 42: RequireCommand -> Require ( F_name.txt ) ;
+        if (len(tokens) >= 1 and
+            tokens[0].type == TokenType.INCLUSION and
+            tokens[-1].value == ';'):
+            return "Require Command"
+
+        # End symbols (Rule 3)
+        if len(tokens) == 1 and self.is_end_symbol(tokens[0]):
+            return "End Symbol"
 
         return None
+
+    def is_start_symbol(self, token):
+        return token.type == TokenType.START_SYMBOL
+
+    def is_end_symbol(self, token):
+        return token.type == TokenType.END_SYMBOL
+
+    def is_type(self, token):
+        return token.type in [
+            TokenType.INTEGER, TokenType.SINTEGER, TokenType.CHARACTER,
+            TokenType.STRING, TokenType.FLOAT, TokenType.SFLOAT,
+            TokenType.VOID, TokenType.BOOLEAN
+        ]
 
     def print_report(self):
         for line in sorted(self.line_report):

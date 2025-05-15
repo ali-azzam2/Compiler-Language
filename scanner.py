@@ -18,7 +18,7 @@ TOKEN_REGEX = [
     (r'=', TokenType.ASSIGNMENT_OP),
     (r'\+|\-|\*|/', TokenType.ARITHMETIC_OP),
 
-    (r'\d+[a-zA-Z_][a-zA-Z0-9_]*', TokenType.ERROR),  # invalid identifiers starting with digits
+    (r'\d+[a-zA-Z_][a-zA-Z0-9_]*', TokenType.IDENTIFIER),  # identifiers starting with digits are now recognized as identifiers
     (r'\d+', TokenType.CONSTANT),
     (r'"[^"]*"', TokenType.STRING),
     (r"'[^']*'", TokenType.CHARACTER),
